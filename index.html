@@ -98,7 +98,12 @@ function convertVideo(video, format) {
   //step through each frame and encode into output format
 
   //display video
+  console.log(video);
+  
   const videoUrl = URL.createObjectURL(video);
+
+  const mediaRecorder = new MediaRecorder(videoUrl, { mimeType: 'video/webm' });
+    console.log(mediaRecorder.mimeType); // e.g., "video/webm; codecs=vp8"
   videoPlayer.src = videoUrl;
 }
 
@@ -111,9 +116,6 @@ function detectSupportedVideoEncodingFormats() {
   const supportedEncodingFormats = [];
 
  
-
-
-
   mimeTypes.forEach((mimeType) => {
     if (MediaRecorder.isTypeSupported(mimeType)) {
       supportedEncodingFormats.push(mimeType);

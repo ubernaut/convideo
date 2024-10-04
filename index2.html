@@ -27,33 +27,35 @@
     <div id="status"></div>
     <h2>Original Video:</h2>
     <video id="originalVideo" ></video>
-    <h2>Transcoded Video:</h2>
-    <video id="transcodedVideo" controls></video>
+    
+    <video id="transcodedVideo" style="display:none;" controls></video>
 
     <script>
-      const fileInput = document.getElementById("fileInput");
-      const transcodeButton = document.getElementById("transcodeButton");
-      const originalVideo = document.getElementById("originalVideo");
-      const transcodedVideo = document.getElementById("transcodedVideo");
-      const status = document.getElementById("status");
-
+      let fileInput = document.getElementById("fileInput");
+      let transcodeButton = document.getElementById("transcodeButton");
+      let originalVideo = document.getElementById("originalVideo");
+      
       let mediaRecorder;
       let recordedChunks = [];
 
       fileInput.addEventListener("change", (e) => {
-        const file = e.target.files[0];
+        let file = e.target.files[0];
         originalVideo.src = URL.createObjectURL(file);
       });
 
       transcodeButton.addEventListener("click", async () => {
+        let transcodedVideo = document.getElementById("transcodedVideo");
+      let status = document.getElementById("status");
+
         if (!fileInput.files.length) {
           alert("Please select a video file first.");
           return;
         }
 
         status.textContent = "Transcoding...";
-        const inputVideo = fileInput.files[0];
-        const videoStream = originalVideo.captureStream();
+        let inputVideo = fileInput.files[0];
+        console.log(fileInput.files);
+        let videoStream = originalVideo.captureStream();
 
         try {
           mediaRecorder = new MediaRecorder(videoStream, {
@@ -74,18 +76,24 @@
         };
 
         mediaRecorder.onstop = () => {
-          const blob = new Blob(recordedChunks, { type: "video/mp4" });
-          transcodedVideo.src = URL.createObjectURL(blob);
+            status.textContent = "Not Transcoding";
+            let blob = new Blob(recordedChunks, { type: "video/mp4" });
+            let vidurl = URL.createObjectURL(blob);
+            console.log(blob);
+            console.log(vidurl);
+          transcodedVideo.src =vidurl;
           status.textContent = "Transcoding complete!";
 
           // Offer download
-          const a = document.createElement("a");
+          let a = document.createElement("a");
           document.body.appendChild(a);
           a.style = "display: none";
           a.href = transcodedVideo.src;
           a.download = "transcoded_video.mp4";
           a.click();
-          window.URL.revokeObjectURL(transcodedVideo.src);
+          //window.URL.revokeObjectURL(transcodedVideo.src);
+          window.location.reload();
+          //document.body.removeChild(a);
         };
 
         originalVideo.onended = () => {

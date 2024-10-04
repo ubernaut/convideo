@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Improved Video Transcoder to MP4</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        progress {
+            width: 100%;
+        }
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Improved Video Transcoder to MP4</h1>
+    <input type="file" id="fileInput" accept="video/*">
+    <button id="transcodeButton">Transcode to MP4</button>
+    <div id="status"></div>
+    <progress id="progressBar" value="0" max="100"></progress>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const transcodeButton = document.getElementById('transcodeButton');
+        const status = document.getElementById('status');
+        const progressBar = document.getElementById('progressBar');
+
+        transcodeButton.addEventListener('click', async () => {
+            if (!fileInput.files.length) {
+                alert('Please select a video file first.');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            status.textContent = 'Transcoding...';
+            progressBar.value = 0;
+
+            try {
+                const videoBuffer = await file.arrayBuffer();
+                const videoBlob = new Blob([videoBuffer], { type: file.type });
+
+                const videoElement = document.createElement('video');
+                videoElement.src = URL.createObjectURL(videoBlob);
+
+                await new Promise((resolve) => {
+                    videoElement.onloadedmetadata = resolve;
+                });
+
+                const stream = videoElement.captureStream();
+                const mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'video/webm;codecs=h264',
+                    videoBitsPerSecond: 5000000 // 5 Mbps
+                });
+
+                const chunks = [];
+                mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+
+                mediaRecorder.onstop = async () => {
+                    const outputBlob = new Blob(chunks, { type: 'video/mp4' });
+                    const url = URL.createObjectURL(outputBlob);
+
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'transcoded_video.mp4';
+                    a.click();
+
+                    URL.revokeObjectURL(url);
+                    status.textContent = 'Transcoding complete! File downloaded.';
+                };
+
+                mediaRecorder.start();
+
+                const duration = videoElement.duration;
+                const updateInterval = 100; // Update progress every 100ms
+
+                for (let time = 0; time <= duration; time += updateInterval / 1000) {
+                    videoElement.currentTime = time;
+                    await new Promise(resolve => setTimeout(resolve, updateInterval));
+                    progressBar.value = (time / duration) * 100;
+                }
+
+                mediaRecorder.stop();
+            } catch (error) {
+                console.error('Transcoding error:', error);
+                status.textContent = 'Error during transcoding. Check console for details.';
+            }
+        });
+    </script>
+</body>
+</html>
