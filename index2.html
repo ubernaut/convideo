@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Video Transcoder to MP4</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      video {
+        max-width: 100%;
+      }
+      #status {
+        margin-top: 20px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Video Transcoder to MP4</h1>
+    <input type="file" id="fileInput" accept="video/*" />
+    <button id="transcodeButton">Transcode to MP4</button>
+    <div id="status"></div>
+    <h2>Original Video:</h2>
+    <video id="originalVideo" controls></video>
+    <h2>Transcoded Video:</h2>
+    <video id="transcodedVideo" controls></video>
+
+    <script>
+      const fileInput = document.getElementById("fileInput");
+      const transcodeButton = document.getElementById("transcodeButton");
+      const originalVideo = document.getElementById("originalVideo");
+      const transcodedVideo = document.getElementById("transcodedVideo");
+      const status = document.getElementById("status");
+
+      let mediaRecorder;
+      let recordedChunks = [];
+
+      fileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        originalVideo.src = URL.createObjectURL(file);
+      });
+
+      transcodeButton.addEventListener("click", async () => {
+        if (!fileInput.files.length) {
+          alert("Please select a video file first.");
+          return;
+        }
+
+        status.textContent = "Transcoding...";
+        const inputVideo = fileInput.files[0];
+        const videoStream = originalVideo.captureStream();
+
+        try {
+          mediaRecorder = new MediaRecorder(videoStream, {
+            mimeType: "video/webm;codecs=h264",
+            videoBitsPerSecond: 5000000, // 5 Mbps
+          });
+        } catch (e) {
+          console.error("MediaRecorder error:", e);
+          status.textContent =
+            "Error: Your browser might not support the required codecs.";
+          return;
+        }
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            recordedChunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: "video/mp4" });
+          transcodedVideo.src = URL.createObjectURL(blob);
+          status.textContent = "Transcoding complete!";
+
+          // Offer download
+          const a = document.createElement("a");
+          document.body.appendChild(a);
+          a.style = "display: none";
+          a.href = transcodedVideo.src;
+          a.download = "transcoded_video.mp4";
+          a.click();
+          window.URL.revokeObjectURL(transcodedVideo.src);
+        };
+
+        originalVideo.onended = () => {
+          mediaRecorder.stop();
+        };
+
+        mediaRecorder.start();
+        originalVideo.play();
+      });
+    </script>
+  </body>
+</html>
