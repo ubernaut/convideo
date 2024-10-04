@@ -102,8 +102,6 @@ function convertVideo(video, format) {
   
   const videoUrl = URL.createObjectURL(video);
 
-  const mediaRecorder = new MediaRecorder(videoUrl, { mimeType: 'video/webm' });
-    console.log(mediaRecorder.mimeType); // e.g., "video/webm; codecs=vp8"
   videoPlayer.src = videoUrl;
 }
 
@@ -163,7 +161,6 @@ function getPlaybackFormats() {
     return supportedPlaybackFormats;
   }
 function populateInputFormatDiv(){
-    console.log("hello world")
     const playbacks =getPlaybackFormats()
     document.getElementById("playbackformatdisplay").innerHTML=playbacks;
 }
